@@ -84,6 +84,7 @@ class Popup {
   func reset() {
     state = .toggle
     KeyboardShortcuts.enable(.popup)
+    AppState.shared.popupDidClose()
   }
 
   func close() {
@@ -104,8 +105,13 @@ class Popup {
     }
     minHeight = max(headerHeight + Self.verticalPadding, minHeight)
 
-    height = max(height, minHeight)
-    height = min(height, Defaults[.windowSize].height)
+    if AppState.shared.history.biometricUnlockRowVisible {
+      height = min(height, Defaults[.windowSize].height)
+      height = max(height, minHeight)
+    } else {
+      height = max(height, minHeight)
+      height = min(height, Defaults[.windowSize].height)
+    }
     return height
   }
 

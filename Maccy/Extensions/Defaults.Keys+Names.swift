@@ -26,6 +26,9 @@ extension Defaults.Keys {
 
   static let clearOnQuit = Key<Bool>("clearOnQuit", default: false, suite: preferencesSuite)
   static let clearSystemClipboard = Key<Bool>("clearSystemClipboard", default: false, suite: preferencesSuite)
+  static let biometricGateEnabled = Key<Bool>("biometricGateEnabled", default: true, suite: preferencesSuite)
+  static let biometricFreeItems = Key<Int>("biometricFreeItems", default: 3, suite: preferencesSuite)
+  static let biometricGraceSeconds = Key<Int>("biometricGraceSeconds", default: 300, suite: preferencesSuite)
   static let clipboardCheckInterval = Key<Double>("clipboardCheckInterval", default: 0.5, suite: preferencesSuite)
   static let enabledPasteboardTypes = Key<Set<NSPasteboard.PasteboardType>>(
     "enabledPasteboardTypes", default: Set(StorageType.all.types), suite: preferencesSuite

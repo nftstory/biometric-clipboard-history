@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B10C0DE10000000000000001 /* BiometricGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10C0DE10000000000000002 /* BiometricGate.swift */; };
+		B10C0DE10000000000000003 /* BiometricUnlockRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10C0DE10000000000000004 /* BiometricUnlockRowView.swift */; };
 		0ABDD5122BB47F1E0054963B /* NSWorkspace+ApplicationName.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ABDD5112BB47F1E0054963B /* NSWorkspace+ApplicationName.swift */; };
 		21FFF308D9217B43FD4C393F /* VoiceOver.swift in Sources */ = {isa = PBXBuildFile; fileRef = B21DCA6C3D17E48D33D6E608 /* VoiceOver.swift */; };
 		2F0EC7792E7727E3003E2EA9 /* HeightReaderModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F0EC7782E7727E3003E2EA9 /* HeightReaderModifier.swift */; };
@@ -185,6 +187,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		B10C0DE10000000000000002 /* BiometricGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricGate.swift; sourceTree = "<group>"; };
+		B10C0DE10000000000000004 /* BiometricUnlockRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricUnlockRowView.swift; sourceTree = "<group>"; };
 		088F4DA628BECBC40003AD19 /* tr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tr; path = tr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		0ABDD5112BB47F1E0054963B /* NSWorkspace+ApplicationName.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSWorkspace+ApplicationName.swift"; sourceTree = "<group>"; };
 		11680E44DAF848ADB8BA358E /* pt */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pt; path = pt.lproj/PinsSettings.strings; sourceTree = "<group>"; };
@@ -701,6 +705,7 @@
 		DA19690C2C3EEF9300258481 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				B10C0DE10000000000000004 /* BiometricUnlockRowView.swift */,
 				2F1091D62F2B6E8100F5C454 /* AsyncView.swift */,
 				2FF2E94F2E7808420093D72C /* AppImageView.swift */,
 				DAA072DE2C41C63C006DDFD2 /* ConfirmationView.swift */,
@@ -765,6 +770,7 @@
 		DA3BCB902C3EEC1000B01BC1 /* Observables */ = {
 			isa = PBXGroup;
 			children = (
+				B10C0DE10000000000000002 /* BiometricGate.swift */,
 				2FF2E94D2E774B570093D72C /* NavigationManager.swift */,
 				DAA072D62C41C574006DDFD2 /* AppState.swift */,
 				DAA072D82C41C5AD006DDFD2 /* Footer.swift */,
@@ -1112,6 +1118,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B10C0DE10000000000000001 /* BiometricGate.swift in Sources */,
+				B10C0DE10000000000000003 /* BiometricUnlockRowView.swift in Sources */,
 				DA19691C2C3F3EAC00258481 /* Collection+Surrounding.swift in Sources */,
 				DA1969142C3F11D600258481 /* PreviewItemView.swift in Sources */,
 				2FF2E9502E7808470093D72C /* AppImageView.swift in Sources */,
@@ -1811,7 +1819,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 2.7.1;
+				MARKETING_VERSION = 2.7.1-touchid-r01;
 				PRODUCT_BUNDLE_IDENTIFIER = org.p0deje.Maccy;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1846,7 +1854,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 2.7.1;
+				MARKETING_VERSION = 2.7.1-touchid-r01;
 				PRODUCT_BUNDLE_IDENTIFIER = org.p0deje.Maccy;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

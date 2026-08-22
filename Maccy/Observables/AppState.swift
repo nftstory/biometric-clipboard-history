@@ -11,6 +11,7 @@ class AppState: Sendable {
   let multiSelectionEnabled = false
 
   var appDelegate: AppDelegate?
+  var biometricGate: BiometricGate
   var popup: Popup
   var history: History
   var footer: Footer
@@ -38,8 +39,10 @@ class AppState: Sendable {
   init(history: History, footer: Footer) {
     self.history = history
     self.footer = footer
+    let biometricGate = BiometricGate()
+    self.biometricGate = biometricGate
     popup = Popup()
-    navigator = NavigationManager(history: history, footer: footer)
+    navigator = NavigationManager(history: history, footer: footer, biometricGate: biometricGate)
     preview = SlideoutController(
       onContentResize: { contentWidth in
         Defaults[.windowSize].width = contentWidth
@@ -53,7 +56,9 @@ class AppState: Sendable {
 
   @MainActor
   func select(flags modifierFlags: NSEvent.ModifierFlags) {
-    if !navigator.selection.isEmpty {
+    if biometricGate.isUnlockRowSelected {
+      biometricGate.authenticate()
+    } else if !navigator.selection.isEmpty {
       if navigator.isMultiSelectInProgress {
         navigator.isManualMultiSelect = false
         history.startPasteStack(selection: &navigator.selection, flags: modifierFlags)
@@ -71,6 +76,30 @@ class AppState: Sendable {
       Clipboard.shared.copyInMaccy(history.searchQuery)
       history.searchQuery = ""
     }
+  }
+
+  @MainActor
+  func prepareForPopupOpen() {
+    biometricGate.activateForPopup()
+    history.refreshVisibleItems()
+
+    if let leadHistoryItem = navigator.leadHistoryItem,
+       !history.items.contains(leadHistoryItem) {
+      navigator.select(item: history.unpinnedItems.first ?? history.pinnedItems.first)
+    }
+  }
+
+  func popupDidClose() {
+    biometricGate.deactivateForPopup()
+    history.refreshVisibleItems()
+  }
+
+  @MainActor
+  func biometricGateDidUnlock() {
+    biometricGate.deselectUnlockRow()
+    history.refreshVisibleItems()
+    navigator.select(item: history.unpinnedItems.first ?? history.pinnedItems.first)
+    popup.needsResize = true
   }
 
   @MainActor

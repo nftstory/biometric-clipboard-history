@@ -1,0 +1,50 @@
+touchid r01 implementation report
+Date: 2026-08-22
+Branch: master
+
+Result
+- Biometric gate, locked list/search source, unlock row, keyboard activation, and r01 version stamp implemented.
+- Release build succeeded at build/Build/Products/Release/Maccy.app.
+- CFBundleShortVersionString verified: 2.7.1-touchid-r01.
+
+Files touched (current line counts)
+- Maccy.xcodeproj/project.pbxproj: 2030
+- Maccy/Extensions/Defaults.Keys+Names.swift: 81
+- Maccy/FloatingPanel.swift: 222
+- Maccy/Observables/AppState.swift: 217
+- Maccy/Observables/BiometricGate.swift: 71 (new)
+- Maccy/Observables/History.swift: 565
+- Maccy/Observables/NavigationManager.swift: 380
+- Maccy/Observables/Popup.swift: 220
+- Maccy/Views/BiometricUnlockRowView.swift: 30 (new)
+- Maccy/Views/HistoryListView.swift: 177
+- Maccy/Views/ListItemView.swift: 145
+
+List/search gating location
+- Maccy/Observables/History.swift, type History: biometricSearchSource() chooses all pins plus the three newest unpinned items while locked; refreshVisibleItems() searches only that source.
+- Maccy/Views/HistoryListView.swift, type HistoryListView: renders the filtered History.items and appends BiometricUnlockRowView after the visible history.
+- Maccy/Observables/NavigationManager.swift, type NavigationManager: includes the unlock row in mouse/arrow/Enter selection flow without creating a pasteable HistoryItem.
+
+Authentication/defaults
+- BiometricGate holds lastAuthAt and evaluates LAContext policy deviceOwnerAuthentication with reason "Unlock clipboard history".
+- Defaults added: biometricGateEnabled=true, biometricFreeItems=3, biometricGraceSeconds=300.
+- Popup activation snapshots grace expiry; successful auth refreshes the current search immediately; cancel/failure does not alter the list.
+
+Build/signing
+- Required automatic-signing command failed: No signing certificate "Mac Development" found for team MN3X4648SC with a private key.
+- Successful fallback: Release build with CODE_SIGN_IDENTITY=-, manual/no team, and ENABLE_HARDENED_RUNTIME=NO.
+- Hardened runtime was disabled for the local ad-hoc artifact because dyld otherwise rejected embedded Sparkle under ad-hoc library validation.
+- codesign result: Signature=adhoc, TeamIdentifier=not set, flags=adhoc; deep/strict verification passed.
+
+Tests
+- Command: xcodebuild ... -only-testing:MaccyTests test (Debug, ad-hoc, macOS destination).
+- Result: 78 tests; 76 passed, 2 failed, 0 skipped.
+- Failure: ClipboardTests.testIgnoreAllApplicationsExcept — timeout waiting for "Hook is called".
+- Failure: ClipboardTests.testIgnoreApplication — inverted expectation "Hook is called" was fulfilled.
+
+Runtime proof/deviations
+- Built app launch and six pbcopy strings at one-second intervals succeeded; built executable PID/path were verified.
+- Required System Events hotkey command returned exit 0, but was unreliable: repeated checks reported zero Maccy windows, and one search attempt typed into Ghostty.
+- No Touch ID automation was attempted.
+- No valid popup-locked.png or popup-search-locked.png is claimed; invalid captures were moved to macOS Trash and proofs/touchid-r01 contains no proof files.
+- The final built app is left running from build/Build/Products/Release/Maccy.app; /Applications and the brew cask were not touched.

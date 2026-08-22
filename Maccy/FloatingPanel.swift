@@ -74,6 +74,7 @@ class FloatingPanel<Content: View>: NSPanel, NSWindowDelegate {
   }
 
   func open(height: CGFloat, at popupPosition: PopupPosition = Defaults[.popupPosition]) {
+    AppState.shared.prepareForPopupOpen()
     let size = Defaults[.windowSize]
     let miniumHeight: CGFloat = AppState.shared.popup.minimumHeight
     let finalWidth = min(frame.width, size.width)
@@ -201,7 +202,7 @@ class FloatingPanel<Content: View>: NSPanel, NSWindowDelegate {
   override func resignKey() {
     super.resignKey()
     // Don't hide if confirmation is shown.
-    if NSApp.alertWindow == nil {
+    if NSApp.alertWindow == nil && !AppState.shared.biometricGate.authenticating {
       close()
     }
   }

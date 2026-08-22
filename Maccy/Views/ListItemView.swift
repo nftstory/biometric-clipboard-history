@@ -34,6 +34,7 @@ struct ListItemView<Title: View, ID: Hashable>: View {
   var appIcon: ApplicationImage?
   var image: NSImage?
   var accessoryImage: NSImage?
+  var leadingSystemImageName: String? = nil
   var attributedTitle: AttributedString?
   var shortcuts: [KeyShortcut]
   var isSelected: Bool
@@ -67,6 +68,14 @@ struct ListItemView<Title: View, ID: Hashable>: View {
 
       Spacer()
         .frame(width: showIcons ? 5 : 10)
+
+      if let leadingSystemImageName {
+        Image(systemName: leadingSystemImageName)
+          .accessibilityHidden(true)
+          .frame(width: 15, height: 15)
+          .padding(.trailing, 5)
+          .padding(.vertical, 5)
+      }
 
       if let accessoryImage {
         Image(nsImage: accessoryImage)

@@ -19,6 +19,9 @@ struct HistoryListView: View {
   private var unpinnedItems: [HistoryItemDecorator] {
     appState.history.unpinnedItems.filter(\.isVisible)
   }
+  private var biometricUnlockRowVisible: Bool {
+    appState.history.biometricUnlockRowVisible
+  }
   private var showPinsSeparator: Bool {
     pinsVisible && !unpinnedItems.isEmpty
   }
@@ -68,7 +71,7 @@ struct HistoryListView: View {
   var body: some View {
     let topPinsVisible = pinTo == .top && pinsVisible
     let bottomPinsVisible = pinTo == .bottom && pinsVisible
-    let historyEmpty = unpinnedItems.isEmpty
+    let historyEmpty = unpinnedItems.isEmpty && !biometricUnlockRowVisible
     let topSeparatorVisible = !historyEmpty && (topPinsVisible || pasteStackVisible)
     let bottomSeparatorVisible = !historyEmpty && bottomPinsVisible
     let scrollTopPadding = topSeparatorVisible ? Popup.verticalSeparatorPadding : topPadding
@@ -120,7 +123,11 @@ struct HistoryListView: View {
           if scenePhase == .active {
             searchFocused = true
             appState.navigator.isKeyboardNavigating = true
-            appState.navigator.select(item: appState.history.unpinnedItems.first ?? appState.history.pinnedItems.first)
+            if let item = appState.history.unpinnedItems.first ?? appState.history.pinnedItems.first {
+              appState.navigator.select(item: item)
+            } else if biometricUnlockRowVisible {
+              appState.navigator.selectBiometricUnlockRow()
+            }
             appState.preview.enableAutoOpen()
             appState.preview.resetAutoOpenSuppression()
             appState.preview.startAutoOpen()
@@ -159,8 +166,12 @@ struct HistoryListView: View {
       if bottomPinsVisible {
         PinsView(items: pinnedItems)
       }
+
+      if biometricUnlockRowVisible {
+        BiometricUnlockRowView()
+      }
     }
-    .padding(.bottom, bottomPinsVisible ? bottomPadding : 0)
+    .padding(.bottom, (bottomPinsVisible || biometricUnlockRowVisible) ? bottomPadding : 0)
     .readHeight(appState, into: \.popup.extraBottomHeight)
   }
 }

@@ -19,10 +19,20 @@ class History: ItemsContainer { // swiftlint:disable:this type_body_length
   var pinnedItems: [HistoryItemDecorator] { items.filter(\.isPinned) }
   var unpinnedItems: [HistoryItemDecorator] { items.filter(\.isUnpinned) }
 
+  var biometricHiddenItemCount: Int {
+    guard AppState.shared.biometricGate.isLocked else { return 0 }
+    let freeItemCount = max(0, Defaults[.biometricFreeItems])
+    return max(0, all.filter(\.isUnpinned).count - freeItemCount)
+  }
+
+  var biometricUnlockRowVisible: Bool {
+    AppState.shared.biometricGate.isLocked && (biometricHiddenItemCount > 0 || !searchQuery.isEmpty)
+  }
+
   var searchQuery: String = "" {
     didSet {
       throttler.throttle { [self] in
-        updateItems(search.search(string: searchQuery, within: all))
+        refreshVisibleItems()
 
         if searchQuery.isEmpty {
           AppState.shared.navigator.select(item: unpinnedItems.first)
@@ -106,7 +116,7 @@ class History: ItemsContainer { // swiftlint:disable:this type_body_length
     let descriptor = FetchDescriptor<HistoryItem>()
     let results = try Storage.shared.context.fetch(descriptor)
     all = sorter.sort(results).map { HistoryItemDecorator($0) }
-    items = all
+    resetItemsAfterHistoryChange()
 
     limitHistorySize(to: Defaults[.size])
 
@@ -192,7 +202,7 @@ class History: ItemsContainer { // swiftlint:disable:this type_body_length
         all.insert(itemDecorator, at: index)
       }
 
-      items = all
+      resetItemsAfterHistoryChange()
       updateUnpinnedShortcuts()
       AppState.shared.popup.needsResize = true
     }
@@ -459,7 +469,7 @@ class History: ItemsContainer { // swiftlint:disable:this type_body_length
       all.insert(item, at: newIndex)
     }
 
-    items = all
+    resetItemsAfterHistoryChange()
 
     searchQuery = ""
     updateUnpinnedShortcuts()
@@ -494,6 +504,34 @@ class History: ItemsContainer { // swiftlint:disable:this type_body_length
     }
 
     updateUnpinnedShortcuts()
+  }
+
+  func refreshVisibleItems() {
+    let source = biometricSearchSource()
+    updateItems(search.search(string: searchQuery, within: source))
+  }
+
+  private func biometricSearchSource() -> [HistoryItemDecorator] {
+    guard AppState.shared.biometricGate.isLocked else { return all }
+
+    let freeItemCount = max(0, Defaults[.biometricFreeItems])
+    let freeItemIDs = Set(
+      all
+        .filter(\.isUnpinned)
+        .sorted { $0.item.lastCopiedAt > $1.item.lastCopiedAt }
+        .prefix(freeItemCount)
+        .map(\.id)
+    )
+
+    return all.filter { $0.isPinned || freeItemIDs.contains($0.id) }
+  }
+
+  private func resetItemsAfterHistoryChange() {
+    if AppState.shared.biometricGate.isLocked {
+      refreshVisibleItems()
+    } else {
+      items = all
+    }
   }
 
   private func updateShortcuts() {

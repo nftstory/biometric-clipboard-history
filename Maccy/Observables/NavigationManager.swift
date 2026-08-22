@@ -5,10 +5,12 @@ import SwiftUI
 class NavigationManager { // swiftlint:disable:this type_body_length
   private var history: History
   private var footer: Footer
+  private var biometricGate: BiometricGate
 
-  init(history: History, footer: Footer) {
+  init(history: History, footer: Footer, biometricGate: BiometricGate) {
     self.history = history
     self.footer = footer
+    self.biometricGate = biometricGate
   }
 
   var selection: Selection<HistoryItemDecorator> = Selection() {
@@ -20,6 +22,9 @@ class NavigationManager { // swiftlint:disable:this type_body_length
 
   var scrollTarget: UUID?
   var leadSelection: UUID? {
+    if biometricGate.isUnlockRowSelected {
+      return biometricGate.unlockRowID
+    }
     if let item = leadHistoryItem {
       return item.id
     }
@@ -83,7 +88,9 @@ class NavigationManager { // swiftlint:disable:this type_body_length
   }
 
   func select(id: UUID) {
-    if let item = history.items.first(where: { $0.id == id }) {
+    if id == biometricGate.unlockRowID, history.biometricUnlockRowVisible {
+      selectBiometricUnlockRow()
+    } else if let item = history.items.first(where: { $0.id == id }) {
       select(item: item, footerItem: nil)
     } else if let item = footer.items.first(where: { $0.id == id }) {
       select(item: nil, footerItem: item)
@@ -100,6 +107,7 @@ class NavigationManager { // swiftlint:disable:this type_body_length
   }
 
   func addToSelection(item: HistoryItemDecorator) {
+    biometricGate.deselectUnlockRow()
     var newSelectionState = selection
 
     if item.isSelected {
@@ -153,6 +161,8 @@ class NavigationManager { // swiftlint:disable:this type_body_length
     if let stack = history.pasteStack,
        stack.id == id {
       selectWithoutScrolling(item: nil, footerItem: nil)
+    } else if id == biometricGate.unlockRowID, history.biometricUnlockRowVisible {
+      selectBiometricUnlockRow()
     } else if let item = history.items.first(where: { $0.id == id }) {
       if !isMultiSelectInProgress {
         selectWithoutScrolling(item: item, footerItem: nil)
@@ -173,6 +183,7 @@ class NavigationManager { // swiftlint:disable:this type_body_length
     } else if let footerItem = footerItem {
       selectInFooter(footerItem)
     } else {
+      biometricGate.deselectUnlockRow()
       leadHistoryItem = nil
       selection = .init()
       footer.selectedItem = nil
@@ -180,17 +191,37 @@ class NavigationManager { // swiftlint:disable:this type_body_length
   }
 
   private func selectInHistory(_ item: HistoryItemDecorator) {
+    biometricGate.deselectUnlockRow()
     leadHistoryItem = item
     selection = .init(items: [item])
     footer.selectedItem = nil
   }
 
   private func selectInFooter(_ item: FooterItem) {
+    biometricGate.deselectUnlockRow()
     leadHistoryItem = nil
     if !isMultiSelectInProgress {
       selection = .init()
     }
     footer.selectedItem = item
+  }
+
+  func selectBiometricUnlockRow() {
+    guard history.biometricUnlockRowVisible else { return }
+
+    withTransaction(Transaction()) {
+      leadHistoryItem = nil
+      selection = .init()
+      footer.selectedItem = nil
+      biometricGate.selectUnlockRow()
+      scrollTarget = nil
+    }
+  }
+
+  private func selectBiometricUnlockRowFromKeyboardNavigation() {
+    isKeyboardNavigating = true
+    isManualMultiSelect = false
+    selectBiometricUnlockRow()
   }
 
   private func selectFromKeyboardNavigation(
@@ -214,6 +245,8 @@ class NavigationManager { // swiftlint:disable:this type_body_length
   func highlightFirst() {
     if let item = history.firstVisibleItem {
       selectFromKeyboardNavigation(item: item)
+    } else if history.biometricUnlockRowVisible {
+      selectBiometricUnlockRowFromKeyboardNavigation()
     } else {
       selectFromKeyboardNavigation(item: nil)
     }
@@ -222,7 +255,11 @@ class NavigationManager { // swiftlint:disable:this type_body_length
   func highlightPrevious() {
     guard let lead = leadSelection else { return }
 
-    if let historyItem = history.firstVisibleItem(where: { $0.id == lead }) {
+    if lead == biometricGate.unlockRowID, history.biometricUnlockRowVisible {
+      if let previousItem = history.lastVisibleItem {
+        selectFromKeyboardNavigation(item: previousItem)
+      }
+    } else if let historyItem = history.firstVisibleItem(where: { $0.id == lead }) {
       if let nextItem = history.visibleItem(before: historyItem) {
         selectFromKeyboardNavigation(item: nextItem)
       } else if history.pasteStack != nil {
@@ -233,6 +270,8 @@ class NavigationManager { // swiftlint:disable:this type_body_length
     } else if let footerItem = footer.firstVisibleItem(where: { $0.id == lead }) {
       if let nextItem = footer.visibleItem(before: footerItem) {
         selectFromKeyboardNavigation(footerItem: nextItem)
+      } else if history.biometricUnlockRowVisible {
+        selectBiometricUnlockRowFromKeyboardNavigation()
       } else if let nextItem = history.lastVisibleItem {
         selectFromKeyboardNavigation(item: nextItem)
       }
@@ -247,9 +286,17 @@ class NavigationManager { // swiftlint:disable:this type_body_length
       return
     }
 
-    if let historyItem = history.firstVisibleItem(where: { $0.id == lead }) {
+    if lead == biometricGate.unlockRowID, history.biometricUnlockRowVisible {
+      if let nextItem = footer.firstVisibleItem {
+        selectFromKeyboardNavigation(footerItem: nextItem)
+      } else if allowCycle {
+        highlightFirst()
+      }
+    } else if let historyItem = history.firstVisibleItem(where: { $0.id == lead }) {
       if let nextItem = history.visibleItem(after: historyItem) {
         selectFromKeyboardNavigation(item: nextItem)
+      } else if history.biometricUnlockRowVisible {
+        selectBiometricUnlockRowFromKeyboardNavigation()
       } else if let nextItem = footer.firstVisibleItem {
         selectFromKeyboardNavigation(footerItem: nextItem)
       } else if allowCycle {
@@ -270,8 +317,14 @@ class NavigationManager { // swiftlint:disable:this type_body_length
   func highlightLast() {
     guard let lead = leadSelection else { return }
 
-    if let historyItem = history.firstVisibleItem(where: { $0.id == lead }) {
-      if historyItem == history.lastVisibleItem,
+    if lead == biometricGate.unlockRowID, history.biometricUnlockRowVisible {
+      if let nextItem = footer.firstVisibleItem {
+        selectFromKeyboardNavigation(footerItem: nextItem)
+      }
+    } else if let historyItem = history.firstVisibleItem(where: { $0.id == lead }) {
+      if history.biometricUnlockRowVisible {
+        selectBiometricUnlockRowFromKeyboardNavigation()
+      } else if historyItem == history.lastVisibleItem,
          let nextItem = footer.firstVisibleItem {
         selectFromKeyboardNavigation(footerItem: nextItem)
       } else {
