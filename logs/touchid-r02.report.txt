@@ -1,0 +1,50 @@
+touchid r02 implementation report
+Date: 2026-08-23
+Branch: master
+
+Result
+- Locked popup preparation now completes without list animation before the panel is ordered front.
+- Release build succeeded at build/Build/Products/Release/Maccy.app.
+- CFBundleShortVersionString verified: 2.7.1-touchid-r02.
+
+Root cause
+- popupDidClose() deactivates the biometric gate and refreshes History.items from the full history.
+- prepareForPopupOpen() restored the gated set before orderFrontRegardless(), but ContentView applies an implicit animation keyed to history.items.
+- The hidden NSHostingView could therefore retain the full-list backing state and paint it while SwiftUI animated the full-to-gated change.
+
+Fix chosen
+- AppState.prepareForPopupOpen() now activates and refreshes the gate inside a Transaction with animations disabled.
+- FloatingPanel.open() forces the still-hidden hosting view to lay out and display that state before orderFrontRegardless().
+- The post-Touch-ID biometricGateDidUnlock() path is unchanged, so its in-popup expansion may still animate.
+- History filtering, search, command-number shortcuts, and navigation logic are unchanged.
+- Grace-window opens still refresh directly to the full source without a gated transition.
+
+Files touched (current line count; diff)
+- Maccy.xcodeproj/project.pbxproj: 2030 lines; +2/-2.
+- Maccy/FloatingPanel.swift: 224 lines; +2/-0.
+- Maccy/Observables/AppState.swift: 222 lines; +10/-5.
+- logs/touchid-r02.report.txt: 50 lines including final newline; new report.
+
+Build/signing
+- Command: xcodebuild -quiet -project Maccy.xcodeproj -scheme Maccy -configuration Release -derivedDataPath build CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= ENABLE_HARDENED_RUNTIME=NO build
+- Result: succeeded; only existing Swift concurrency warnings were emitted.
+- codesign: Signature=adhoc, TeamIdentifier=not set, flags=adhoc.
+- codesign --verify --deep --strict --verbose=2: valid on disk and satisfies its Designated Requirement.
+- Final CDHash: 49adde857b161e1775fb3866bb70a4853887a6a7.
+
+Tests
+- Command: xcodebuild -quiet -project Maccy.xcodeproj -scheme Maccy -configuration Debug -derivedDataPath build-tests -destination platform=macOS CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= -only-testing:MaccyTests test
+- Result: 78 tests; 76 passed, 2 failed, 0 skipped.
+- Known flake: ClipboardTests.testIgnoreAllApplicationsExcept failed after 3 retries waiting for "Hook is called".
+- Known flake: ClipboardTests.testIgnoreApplication failed after 3 retries because inverted expectation "Hook is called" was fulfilled.
+- No other tests failed in the final full run.
+
+Runtime
+- Terminated PID 45461 after resolving the exact repo-build executable path; no other Maccy process was targeted.
+- Fresh r02 PID: 96002.
+- Executable: /Users/nicholas/Development/maccy-touchid/build/Build/Products/Release/Maccy.app/Contents/MacOS/Maccy
+
+Deviations / verification boundary
+- No screenshot or Touch ID automation was attempted, as required.
+- The locked-popup flash check remains a user visual verification step.
+- No implementation deviations; no push performed.

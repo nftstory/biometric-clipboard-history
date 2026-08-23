@@ -80,12 +80,17 @@ class AppState: Sendable {
 
   @MainActor
   func prepareForPopupOpen() {
-    biometricGate.activateForPopup()
-    history.refreshVisibleItems()
+    var transaction = Transaction(animation: nil)
+    transaction.disablesAnimations = true
 
-    if let leadHistoryItem = navigator.leadHistoryItem,
-       !history.items.contains(leadHistoryItem) {
-      navigator.select(item: history.unpinnedItems.first ?? history.pinnedItems.first)
+    withTransaction(transaction) {
+      biometricGate.activateForPopup()
+      history.refreshVisibleItems()
+
+      if let leadHistoryItem = navigator.leadHistoryItem,
+         !history.items.contains(leadHistoryItem) {
+        navigator.select(item: history.unpinnedItems.first ?? history.pinnedItems.first)
+      }
     }
   }
 
