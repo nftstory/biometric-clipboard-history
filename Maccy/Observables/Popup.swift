@@ -39,6 +39,7 @@ class Popup {
 
   var needsResize = false
   var height: CGFloat = 0
+  var historyListHeight: CGFloat = 0
   var headerHeight: CGFloat = 0
   var extraTopHeight: CGFloat = 0
   var extraBottomHeight: CGFloat = 0
@@ -105,13 +106,8 @@ class Popup {
     }
     minHeight = max(headerHeight + Self.verticalPadding, minHeight)
 
-    if AppState.shared.history.biometricUnlockRowVisible {
-      height = min(height, Defaults[.windowSize].height)
-      height = max(height, minHeight)
-    } else {
-      height = max(height, minHeight)
-      height = min(height, Defaults[.windowSize].height)
-    }
+    height = max(height, minHeight)
+    height = min(height, Defaults[.windowSize].height)
     return height
   }
 
@@ -119,8 +115,13 @@ class Popup {
     return historyListHeight + headerHeight + extraTopHeight + extraBottomHeight + footerHeight
   }
 
+  func refreshHeightFromMeasurements() {
+    height = suitableHeight(for: historyListHeight)
+  }
+
   func resize(height: CGFloat) {
-    self.height = suitableHeight(for: height)
+    historyListHeight = height
+    refreshHeightFromMeasurements()
     AppState.shared.appDelegate?.panel.verticallyResize(to: preferredHeight(for: self.height))
     needsResize = false
   }

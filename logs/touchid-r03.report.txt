@@ -1,0 +1,51 @@
+touchid r03 implementation report
+Date: 2026-08-25
+Branch: master
+
+Result
+- The locked popup now derives its opening height from the gated content before the panel is shown.
+- Release build succeeded at build/Build/Products/Release/Maccy.app.
+- CFBundleShortVersionString verified: 2.7.1-touchid-r03.
+
+Root cause
+- popupDidClose() restores the full history in the hidden panel, so Popup.height retained the full-history measurement.
+- prepareForPopupOpen() switched History.items to the gated set, but FloatingPanel.open() sized the panel from the stale supplied height before forcing the hidden SwiftUI layout.
+- Round 02 therefore fixed the first painted content but pre-drew it inside the already selected full stored height; the flexible ScrollView became the black gap and left the separately measured unlock row at the bottom.
+- The unlock row was already included correctly in extraBottomHeight; its placement was not the source of the gap.
+
+Fix chosen
+- HistoryListView now continuously retains the measured scroll-content height in Popup.historyListHeight.
+- FloatingPanel.open() activates the gate, lays out the still-hidden hosting view, refreshes Popup.height from the gated list plus header/top/bottom/footer measurements, and only then sizes, pre-draws, and orders the panel front.
+- Popup.preferredHeight() again uses stock Maccy's minimum-then-stored-maximum clamp ordering.
+- The existing biometricGateDidUnlock() needsResize path is unchanged, preserving the animated in-popup expansion and the stored-height cap.
+- Search, command-number, arrow navigation, grace-window, and unlock-row layout logic are unchanged.
+
+Files touched (current line count; diff)
+- Maccy.xcodeproj/project.pbxproj: 2030 lines; +2/-2.
+- Maccy/FloatingPanel.swift: 227 lines; +5/-2.
+- Maccy/Observables/Popup.swift: 221 lines; +9/-8.
+- Maccy/Views/HistoryListView.swift: 178 lines; +1/-0.
+- logs/touchid-r03.report.txt: 51 lines including final newline; new report.
+
+Build/signing
+- Command: xcodebuild -quiet -project Maccy.xcodeproj -scheme Maccy -configuration Release -derivedDataPath build CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= ENABLE_HARDENED_RUNTIME=NO build
+- Result: succeeded; only the existing Swift concurrency warnings were emitted.
+- codesign: Signature=adhoc, TeamIdentifier=not set, flags=adhoc; CDHash 2df48aede950ce0876ed90f4ceb4cfb88ef2188e.
+- codesign --verify --deep --strict --verbose=2: valid on disk and satisfies its Designated Requirement.
+
+Tests
+- Command: xcodebuild -quiet -project Maccy.xcodeproj -scheme Maccy -configuration Debug -derivedDataPath build-tests -destination platform=macOS CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= -only-testing:MaccyTests test
+- Result: 78 tests; 76 passed, 2 failed, 0 skipped.
+- Known flake: ClipboardTests.testIgnoreAllApplicationsExcept failed after 3 attempts waiting for "Hook is called".
+- Known flake: ClipboardTests.testIgnoreApplication failed after 3 attempts because inverted expectation "Hook is called" was fulfilled.
+- No other tests failed.
+
+Runtime
+- Terminated original r02 PID 96002 only after its executable path exactly matched the repo Release executable.
+- Final r03 PID: 97534.
+- Executable: /Users/nicholas/Development/maccy-touchid/build/Build/Products/Release/Maccy.app/Contents/MacOS/Maccy
+
+Deviations / verification boundary
+- No screenshot or Touch ID automation was attempted, as required.
+- Locked sizing, first-frame behavior, and post-auth expansion remain user visual verification steps.
+- No implementation deviations; no push performed.

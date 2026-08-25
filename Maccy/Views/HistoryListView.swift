@@ -108,6 +108,7 @@ struct HistoryListView: View {
         }
         .padding(.top, scrollTopPadding)
         .padding(.bottom, scrollBottomPadding)
+        .readHeight(appState, into: \.popup.historyListHeight)
         .task(id: appState.navigator.scrollTarget) {
           guard appState.navigator.scrollTarget != nil else { return }
 

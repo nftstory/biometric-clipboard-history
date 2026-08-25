@@ -73,12 +73,15 @@ class FloatingPanel<Content: View>: NSPanel, NSWindowDelegate {
     }
   }
 
-  func open(height: CGFloat, at popupPosition: PopupPosition = Defaults[.popupPosition]) {
+  func open(height _: CGFloat, at popupPosition: PopupPosition = Defaults[.popupPosition]) {
     AppState.shared.prepareForPopupOpen()
+    contentView?.layoutSubtreeIfNeeded()
+    AppState.shared.popup.refreshHeightFromMeasurements()
+
     let size = Defaults[.windowSize]
     let miniumHeight: CGFloat = AppState.shared.popup.minimumHeight
     let finalWidth = min(frame.width, size.width)
-    let finalHeight = max(min(height, size.height), miniumHeight)
+    let finalHeight = max(min(AppState.shared.popup.height, size.height), miniumHeight)
     setContentSize(NSSize(width: finalWidth, height: finalHeight))
     setFrameOrigin(popupPosition.origin(size: frame.size, statusBarButton: statusBarButton))
     contentView?.layoutSubtreeIfNeeded()
