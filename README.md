@@ -10,9 +10,20 @@ Clipboard managers quietly accumulate some of the most sensitive data on your ma
 
 * While locked, the popup shows only your **pinned items and the 3 most recent entries**, plus an **"Unlock full history…"** row. Search, ⌘-shortcuts, and keyboard navigation operate only on those visible items — older history can't leak through search.
 * Selecting **Unlock full history…** prompts for **Touch ID** (with password fallback). After a successful unlock, the full history stays available for a 5-minute grace period, then re-locks.
-* Tunable via `defaults` under `org.p0deje.Maccy`: `biometricGateEnabled` (default `true`), `biometricFreeItems` (default `3`), `biometricGraceSeconds` (default `300`).
+* Tunable via `defaults` under `life.nftstory.biometric-clipboard-history`: `biometricGateEnabled` (default `true`), `biometricFreeItems` (default `3`), `biometricGraceSeconds` (default `300`).
 
-Everything else is stock Maccy — same bundle id, so it picks up your existing Maccy settings and history. Built by [nftstory](https://github.com/nftstory); not affiliated with the upstream project. Upstream's MIT license applies (see [LICENSE](LICENSE)).
+Everything else is stock Maccy. Built by [nftstory](https://github.com/nftstory); not affiliated with the upstream project. Upstream's MIT license applies (see [LICENSE](LICENSE)).
+
+### Migrating from Maccy
+
+The new bundle ID has its own sandbox, so the app cannot read Maccy's existing container. Quit both apps, launch this fork once to create its container, quit it, then run:
+
+```sh
+OLD="$HOME/Library/Containers/org.p0deje.Maccy/Data/Library"; NEW="$HOME/Library/Containers/life.nftstory.biometric-clipboard-history/Data/Library"
+/bin/mkdir -p "$NEW/Preferences" "$NEW/Application Support/Maccy"
+/usr/bin/ditto "$OLD/Preferences/org.p0deje.Maccy.plist" "$NEW/Preferences/life.nftstory.biometric-clipboard-history.plist"
+for suffix in "" -wal -shm; do [ ! -f "$OLD/Application Support/Maccy/Storage.sqlite$suffix" ] || /usr/bin/ditto "$OLD/Application Support/Maccy/Storage.sqlite$suffix" "$NEW/Application Support/Maccy/Storage.sqlite$suffix"; done; /usr/bin/killall cfprefsd
+```
 
 To build locally:
 

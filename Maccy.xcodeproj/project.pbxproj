@@ -1807,7 +1807,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 2.7.1-touchid-r05;
+				MARKETING_VERSION = 2.7.1-touchid-r06;
 				PRODUCT_BUNDLE_IDENTIFIER = "life.nftstory.biometric-clipboard-history";
 				PRODUCT_MODULE_NAME = Maccy;
 				PRODUCT_NAME = "Biometric Clipboard History";
@@ -1843,7 +1843,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 2.7.1-touchid-r05;
+				MARKETING_VERSION = 2.7.1-touchid-r06;
 				PRODUCT_BUNDLE_IDENTIFIER = "life.nftstory.biometric-clipboard-history";
 				PRODUCT_MODULE_NAME = Maccy;
 				PRODUCT_NAME = "Biometric Clipboard History";

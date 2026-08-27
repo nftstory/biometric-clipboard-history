@@ -158,12 +158,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     let destinationStoreURL = URL.applicationSupportDirectory
       .appending(path: "Maccy/Storage.sqlite")
 
-    var legacyDefaults = try readLegacyDefaults(at: legacyPreferencesURL) ?? [:]
-    let hasLegacyStore = try readableFileExists(at: legacyStoreURL)
-    if hasLegacyStore && !FileManager.default.fileExists(atPath: destinationStoreURL.path) {
-      try copyLegacyStore(from: legacyStoreURL, to: destinationStoreURL)
+    var legacyDefaults: [String: Any]
+    let hasLegacyStore: Bool
+    do {
+      legacyDefaults = try readLegacyDefaults(at: legacyPreferencesURL) ?? [:]
+      hasLegacyStore = try readableFileExists(at: legacyStoreURL)
+      if hasLegacyStore && !FileManager.default.fileExists(atPath: destinationStoreURL.path) {
+        try copyLegacyStore(from: legacyStoreURL, to: destinationStoreURL)
+      }
+    } catch where isPermissionError(error) {
+      defaults.set(true, forKey: Self.legacyMigrationDoneKey)
+      defaults.synchronize()
+      NSLog(
+        "Legacy bundle migration skipped: permission denied reading the legacy container: %@",
+        String(reflecting: error)
+      )
+      return
     }
-
     // The fork's biometric defaults may never have been materialized in the old
     // preferences domain. Persist their effective values in the new domain.
     if legacyDefaults["biometricGateEnabled"] == nil {
@@ -263,6 +274,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   private func isNoSuchFileError(_ error: Error) -> Bool {
     let error = error as NSError
     return error.domain == NSCocoaErrorDomain && error.code == NSFileReadNoSuchFileError
+  }
+
+  private func isPermissionError(_ error: Error) -> Bool {
+    let error = error as NSError
+    if error.domain == NSCocoaErrorDomain && error.code == NSFileReadNoPermissionError {
+      return true
+    }
+    if error.domain == NSPOSIXErrorDomain && (error.code == EACCES || error.code == EPERM) {
+      return true
+    }
+    if let underlyingError = error.userInfo[NSUnderlyingErrorKey] as? Error {
+      return isPermissionError(underlyingError)
+    }
+    return false
   }
 
   private func migrationError(_ message: String) -> NSError {
