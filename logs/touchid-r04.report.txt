@@ -1,0 +1,75 @@
+touchid r04 implementation report
+Date: 2026-08-27
+Branch: master
+
+Result
+- Renamed the built and installed product to Biometric Clipboard History.app.
+- Preserved bundle identifier org.p0deje.Maccy for settings and history carryover.
+- Removed Sparkle update capability and the upstream feed path.
+- Installed and launched r04 from /Applications as the only matching clipboard-manager process.
+
+Rename mechanism
+- App-target PRODUCT_NAME and PBX productName/product reference are Biometric Clipboard History.
+- CFBundleDisplayName and CFBundleName both resolve from $(PRODUCT_NAME).
+- PRODUCT_MODULE_NAME remains Maccy so @testable import Maccy and source type names remain unchanged.
+- The shared scheme and MaccyTests TEST_HOST point at the renamed app and executable.
+- Finder uses the renamed .app bundle; the standard About panel uses the bundle name; the app/menu name follows the bundle metadata.
+- Popup header did not derive from bundle metadata: ListHeaderView hard-coded Text("Maccy").
+- Changed that one source label to Text("Biometric Clipboard History"); localized strings were not renamed repo-wide.
+
+Sparkle changes
+- Removed SUFeedURL and the upstream p0deje/Maccy appcast URL from Info.plist.
+- Added SUEnableAutomaticChecks=false as defense in depth.
+- Removed Sparkle from the target frameworks, Swift package references, and Package.resolved.
+- Removed Sparkle startup code from AppDelegate and deleted SoftwareUpdater.swift.
+- Removed the automatic-check toggle and Check Now button from General settings.
+- Removed appcast.xml from the Xcode project and app resources; the upstream root file remains unreferenced.
+- Verified the built bundle contains no Sparkle/appcast payload and the executable has no Sparkle linkage.
+
+Version
+- CFBundleShortVersionString: 2.7.1-touchid-r04.
+
+Files touched (current line count; diff)
+- Maccy.xcodeproj/project.pbxproj: 2007 lines; +12/-35.
+- Maccy.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved: 78 lines; +1/-10.
+- Maccy.xcodeproj/xcshareddata/xcschemes/Maccy.xcscheme: 105 lines; +3/-3.
+- Maccy/AppDelegate.swift: 216 lines; +0/-6.
+- Maccy/Info.plist: 36 lines; +4/-6.
+- Maccy/Settings/GeneralSettingsPane.swift: 119 lines; +0/-9.
+- Maccy/SoftwareUpdater.swift: deleted; 37 lines removed.
+- Maccy/Views/ListHeaderView.swift: 34 lines; +1/-1.
+- logs/touchid-r04.report.txt: 75 lines including final newline; new report.
+
+Build/signing
+- Command: xcodebuild -quiet -project Maccy.xcodeproj -scheme Maccy -configuration Release -derivedDataPath build CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= ENABLE_HARDENED_RUNTIME=NO build
+- Result: succeeded; only existing Swift concurrency warnings were emitted.
+- Built product: build/Build/Products/Release/Biometric Clipboard History.app.
+- Bundle metadata verified: display/name/executable all Biometric Clipboard History; identifier org.p0deje.Maccy; version r04.
+- codesign: Signature=adhoc, TeamIdentifier=not set, flags=adhoc; CDHash f5c93e3fc1fe520ed1240769c4610875a92b0d5e.
+- codesign --verify --deep --strict --verbose=2 passed for both built and installed bundles.
+
+Tests
+- Command: xcodebuild -quiet -project Maccy.xcodeproj -scheme Maccy -configuration Debug -derivedDataPath build-tests -destination platform=macOS CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= -only-testing:MaccyTests test
+- Result: 78 tests; 76 passed, 2 failed, 0 skipped (82 runs including retries).
+- Known flake only: ClipboardTests.testIgnoreAllApplicationsExcept failed all 3 attempts waiting for "Hook is called".
+- Known flake only: ClipboardTests.testIgnoreApplication failed all 3 attempts because inverted expectation "Hook is called" was fulfilled.
+- No other tests failed.
+
+Install/runtime
+- No r03 process matched the exact repo Release executable path at quit time, so no process was terminated.
+- Homebrew cask maccy was installed; brew uninstall --cask maccy succeeded and removed /Applications/Maccy.app.
+- No stale /Applications/Biometric Clipboard History.app existed before installation.
+- Copied the verified Release bundle with ditto and launched it from /Applications.
+- Final PID: 33275.
+- Executable: /Applications/Biometric Clipboard History.app/Contents/MacOS/Biometric Clipboard History.
+- Installed version: 2.7.1-touchid-r04; bundle identifier: org.p0deje.Maccy.
+- No other Maccy/Biometric Clipboard History process was running at final verification.
+- /Applications/Maccy.app is absent; /Applications/Biometric Clipboard History.app is present.
+
+Permissions / deviations
+- Accessibility likely needs re-granting because the ad-hoc signature differs from Homebrew's notarized build; macOS may re-prompt.
+- The login item may also need to be re-enabled because both the installed path/name and signing identity changed; not modified here.
+- First test attempt stopped before execution because PRODUCT_NAME also changed the Swift module name; fixed with PRODUCT_MODULE_NAME=Maccy, then reran the full suite above.
+- No screenshot, popup, Touch ID, Accessibility, or login-item automation was attempted.
+- Popup appearance and Touch ID behavior remain user visual/manual checks.
+- No push performed.
