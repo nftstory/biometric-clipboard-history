@@ -1,6 +1,6 @@
-# Maccy + Touch ID
+# Biometric Clipboard History
 
-This is a fork of [Maccy](https://github.com/p0deje/Maccy) (based on v2.7.1) that puts your clipboard history behind Touch ID.
+Biometric Clipboard History is a fork of [Maccy](https://github.com/p0deje/Maccy) (based on v2.7.1) that puts your clipboard history behind Touch ID.
 
 Clipboard managers quietly accumulate some of the most sensitive data on your machine — passwords, tokens, addresses, private messages — and expose all of it to anyone in front of an unlocked Mac. This fork keeps the convenience but locks down the archive:
 
