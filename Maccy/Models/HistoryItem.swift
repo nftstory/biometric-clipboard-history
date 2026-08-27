@@ -82,14 +82,17 @@ class HistoryItem {
     self.contents = contents
   }
 
+  var hasComparableContents: Bool {
+    contents.contains { !Self.transientTypes.contains($0.type) }
+  }
+
   func supersedes(_ item: HistoryItem) -> Bool {
-    return item.contents
-      .filter { content in
-        !Self.transientTypes.contains(content.type)
-      }
-      .allSatisfy { content in
-        contents.contains(where: { $0.type == content.type && $0.value == content.value })
-      }
+    let comparableContents = item.contents.filter { !Self.transientTypes.contains($0.type) }
+    guard !comparableContents.isEmpty else { return false }
+
+    return comparableContents.allSatisfy { content in
+      contents.contains(where: { $0.type == content.type && $0.value == content.value })
+    }
   }
 
   func generateTitle() -> String {

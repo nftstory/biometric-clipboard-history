@@ -218,6 +218,9 @@ class Clipboard {
     }
 
     let historyItem = HistoryItem(contents: contents)
+    guard historyItem.hasComparableContents else {
+      return
+    }
 
     if #unavailable(macOS 15.0) {
       // On macOS 14 the history item needs to be inserted into storage directly after creating it.

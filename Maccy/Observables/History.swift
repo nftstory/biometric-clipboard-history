@@ -11,7 +11,7 @@ import SwiftData
 @Observable
 class History: ItemsContainer { // swiftlint:disable:this type_body_length
   static let shared = History()
-  let logger = Logger(label: "org.p0deje.Maccy")
+  let logger = Logger(label: "life.nftstory.biometric-clipboard-history")
 
   var items: [HistoryItemDecorator] = []
   var pasteStack: PasteStack?
@@ -480,6 +480,8 @@ class History: ItemsContainer { // swiftlint:disable:this type_body_length
 
   @MainActor
   private func findSimilarItem(_ item: HistoryItem) -> HistoryItem? {
+    guard item.hasComparableContents else { return nil }
+
     if let duplicate = all.first(where: { $0.item != item && $0.item.supersedes(item) }) {
       return duplicate.item
     }

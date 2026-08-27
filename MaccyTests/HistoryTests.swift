@@ -154,6 +154,23 @@ class HistoryTests: XCTestCase { // swiftlint:disable:this type_body_length
     XCTAssertEqual(Set(history.items[0].item.contents), Set(firstContents))
   }
 
+  func testAddingTransientOnlyItemDoesNotMergeWithUnrelatedItem() throws {
+    let existing = history.add(historyItem("unrelated"))
+    let transientOnly = HistoryItem(contents: [
+      HistoryItemContent(
+        type: NSPasteboard.PasteboardType.source.rawValue,
+        value: "transient-source".data(using: .utf8)
+      )
+    ])
+
+    let added = history.add(transientOnly)
+
+    XCTAssertEqual(existing.item.numberOfCopies, 1)
+    XCTAssertEqual(added.item.numberOfCopies, 1)
+    XCTAssertEqual(history.all.count, 2)
+    try assertStorageCounts(items: 2, contents: 2)
+  }
+
   func testAddingItemFromMaccy() {
     let firstContents = [
       HistoryItemContent(
