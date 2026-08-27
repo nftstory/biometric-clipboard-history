@@ -1,3 +1,27 @@
+# Maccy + Touch ID
+
+This is a fork of [Maccy](https://github.com/p0deje/Maccy) (based on v2.7.1) that puts your clipboard history behind Touch ID.
+
+Clipboard managers quietly accumulate some of the most sensitive data on your machine — passwords, tokens, addresses, private messages — and expose all of it to anyone in front of an unlocked Mac. This fork keeps the convenience but locks down the archive:
+
+* While locked, the popup shows only your **pinned items and the 3 most recent entries**, plus an **"Unlock full history…"** row. Search, ⌘-shortcuts, and keyboard navigation operate only on those visible items — older history can't leak through search.
+* Selecting **Unlock full history…** prompts for **Touch ID** (with password fallback). After a successful unlock, the full history stays available for a 5-minute grace period, then re-locks.
+* Tunable via `defaults` under `org.p0deje.Maccy`: `biometricGateEnabled` (default `true`), `biometricFreeItems` (default `3`), `biometricGraceSeconds` (default `300`).
+
+Everything else is stock Maccy — same bundle id, so it picks up your existing Maccy settings and history. Built by [nftstory](https://github.com/nftstory); not affiliated with the upstream project. Upstream's MIT license applies (see [LICENSE](LICENSE)).
+
+To build locally:
+
+```sh
+xcodebuild -project Maccy.xcodeproj -scheme Maccy -configuration Release \
+  -derivedDataPath build CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual \
+  DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= ENABLE_HARDENED_RUNTIME=NO build
+```
+
+The upstream README follows.
+
+---
+
 > [!WARNING]
 > **Beware of fake websites impersonating Maccy.** Malicious sites (such as `maccyapp.net` and `maccyapp.com`) distribute malware disguised as Maccy. [**maccy.app**](https://maccy.app) is the **only** official website.
 
