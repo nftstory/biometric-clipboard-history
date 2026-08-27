@@ -2,6 +2,10 @@
 
 Biometric Clipboard History is a fork of [Maccy](https://github.com/p0deje/Maccy) (based on v2.7.1) that puts your clipboard history behind Touch ID.
 
+<img src="docs/img/locked-popup.png" width="500" alt="The locked popup: the three most recent clipboard items, then an Unlock full history row with a lock icon" />
+
+*The locked popup — your latest copies stay one keystroke away; everything older is behind Touch ID.*
+
 Clipboard managers quietly accumulate some of the most sensitive data on your machine — passwords, tokens, addresses, private messages — and expose all of it to anyone in front of an unlocked Mac. This fork keeps the convenience but locks down the archive:
 
 * While locked, the popup shows only your **pinned items and the 3 most recent entries**, plus an **"Unlock full history…"** row. Search, ⌘-shortcuts, and keyboard navigation operate only on those visible items — older history can't leak through search.
